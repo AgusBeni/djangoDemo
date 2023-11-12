@@ -4,7 +4,9 @@ from .serializers import ProductSerializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from bson import ObjectId
+from bson.objectid import ObjectId
+from bson import json_util
+import json
 
 from django.http import JsonResponse
 from pymongo import MongoClient
@@ -18,51 +20,21 @@ collection = db['product']
 def product_list(request):
 
     if request.method == 'GET':
-        order_list = collection.find()
+        product_list = collection.find()
 
-        document_list = [doc for doc in order_list]
+        doc_list = json_util.dumps(product_list)
 
-        return JsonResponse(document_list, safe=False)
+        return JsonResponse(doc_list, safe=False)
 
-# @api_view(['GET', 'POST'])
-# def product_list(request, format=None):
+@api_view(['GET'])
+def product_detail(id, format=None):
+    try:
+        product = collection.find_one({'_id': ObjectId(id)})
+        product['_id'] = str(product['_id'])
+        return Response(product)
+    except Product.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
-#     if request.method == 'GET':
-#         #get all the products
-#         products = Product.objects.all()
-#         #serialize them
-#         serializer = ProductSerializers(products, many=True)
-#         #return json
-#         return Response(serializer.data)
-    
-#     if request.method == 'POST':
-#         serializer = ProductSerializers(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
-# @api_view(['GET', 'PUT', 'DELETE'])
-# def product_detail(request, id, format=None):
-
-#     try:
-#         product = collection.find_one({'_id': id})
-#     except Product.DoesNotExist:
-#         return Response(status=status.HTTP_404_NOT_FOUND)
-
-#     if request.method == 'GET':
-#         serializer = ProductSerializers(product)
-#         return Response(serializer.data)
-    
-#     elif request.method == 'PUT':
-#         serializer = ProductSerializers(product, data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-#     elif request.method == 'DELETE':
-#         product.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
     
 @api_view(['POST'])
 def product_detail_add(request, format=None):
@@ -86,18 +58,11 @@ def product_detail_add(request, format=None):
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-# @api_view(['PUT'])
-# def product_detail_update(request, id, format=None):
-#     try:
-#         product = product_detail(id)
-#     except Product.DoesNotExist:
-#         return Response(status=status.HTTP_404_NOT_FOUND)
+@api_view(['GET','DELETE'])
+def product_delete(id, format=None):
+    try:
+        collection.delete_one({'_id': ObjectId(id)})
 
-#     if request.method == 'PUT':
-#         serializer = ProductSerializers(product, data=request.data)
-#         if serializer.is_valid():
-#             collection.find_one_and_update({'_id': id}, serializer, return_document=True)
-#             return Response(serializer.data)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#     else:
-#         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Product.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
