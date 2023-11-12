@@ -6,7 +6,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from bson.objectid import ObjectId
 from bson import json_util
-import json
 
 from django.http import JsonResponse
 from pymongo import MongoClient
@@ -25,17 +24,7 @@ def product_list(request):
         doc_list = json_util.dumps(product_list)
 
         return JsonResponse(doc_list, safe=False)
-
-@api_view(['GET'])
-def product_detail(id, format=None):
-    try:
-        product = collection.find_one({'_id': ObjectId(id)})
-        product['_id'] = str(product['_id'])
-        return Response(product)
-    except Product.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    
+ 
 @api_view(['POST'])
 def product_detail_add(request, format=None):
 
@@ -58,11 +47,20 @@ def product_detail_add(request, format=None):
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-@api_view(['GET','DELETE'])
-def product_delete(id, format=None):
+@api_view(['DELETE'])
+def product_delete(request, id):
     try:
         collection.delete_one({'_id': ObjectId(id)})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+    except Product.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def product_detail(request, id, format=None):
+    try:
+        product = collection.find_one({'_id': ObjectId(id)})
+        product['_id'] = str(product['_id'])
+        return Response(product)
     except Product.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)

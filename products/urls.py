@@ -22,9 +22,9 @@ from rest_framework.urlpatterns import format_suffix_patterns
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('products/', views.product_list),
-    path('products/<str:id>', views.product_detail),
-    path('product/delete/<str:id>', views.product_delete),
-    path('product/add', views.product_detail_add), 
+    path('addproduct/', views.product_detail_add), 
+    path('removeproduct/<str:id>', views.product_delete),
+    path('getproducts/<str:id>', views.product_detail),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
